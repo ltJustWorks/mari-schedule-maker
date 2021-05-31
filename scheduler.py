@@ -2,12 +2,13 @@
 import numpy as np
 import csv
 
-times_dict = {'08:15':'0', '08:45':'1','09:15':'2','09:45':'3', '10:15':'4', '10:45':'5','11:15':'6','11:45':'7', '12:15':'8', '12:45':'9','13:15':'10','13:45':'11', '14:15':'12', '14:45':'13','15:15':'14','15:45':'15', '16:15':'16', '16:45':'17','17:15':'18','17:45':'19', '18:15':'20', '18:45':'21','19:15':'22','19:45':'23', '20:15':'24'}
+times_dict = {'08:15':0, '08:45':1,'09:15':2,'09:45':3, '10:15':4, '10:45':5,'11:15':6,'11:45':7, '12:15':8, '12:45':9,'13:15':10,'13:45':11, '14:15':12, '14:45':13,'15:15':14,'15:45':15, '16:15':16, '16:45':17,'17:15':18,'17:45':19, '18:15':20, '18:45':21,'19:15':22,'19:45':23, '20:15':24}
 day_dict = {'M': 0, 'T': 1, 'W': 2, 'H': 3, 'F': 4}
 
 def make_2d_array():
-    return np.zeros((5, len(times_dict))) # Each row represents a day, each time represents a timeslot
-                                          # Ex. Accessing Tuesday's 3rd timeslot: arr[1][2] (0-based indexing)
+    # Each row represents a day, each time represents a timeslot
+    # Ex. Accessing Tuesday's 3rd timeslot: arr[1][2] (0-based indexing)
+    return [[0] * 25 for i in range(5)]
 
 class Course(object):
         # What is Course?
@@ -26,6 +27,9 @@ class Course(object):
     
     def __str__(self):
         return "Title: " + str(self.title) + "\n" + "Course #: " + str(self.course_no) + "\n" + "Section: " + str(self.section) + "\n" + "Times: " + str(self.times) + "\n" + "Room: " + str(self.room)
+    
+    def __repr__(self):
+        return self.course_no
 
 def csv_to_2d_arr():
     with open('output.csv', 'r') as csv_file:
@@ -66,8 +70,7 @@ def create_class_from_list(my_list): # Nested list
         for day in days:
             new_entry = {int(day_dict.get(day)): string_to_time_list(my_list[row][4])}
             times.update(new_entry)
-    # return Course(title, course_no, section, times, room)
-    print(Course(title, course_no, section, times, room))
+    return Course(title, course_no, section, times, room)
 
 
 def print_2d_arr(arr):
@@ -77,8 +80,14 @@ def print_2d_arr(arr):
 
 test = convert_table(csv_to_2d_arr())
 print(test)
-for row in test: # Each row is a course
-    create_class_from_list(row)
+
+test_class = create_class_from_list(test[0])
+test_class2 = create_class_from_list(test[1])
+test_class3 = create_class_from_list(test[11])
+print(test_class)
+print(test_class2)
+print(test_class3)
+
 
 ####################
 
@@ -86,8 +95,31 @@ class Schedule(object):
     def __init__(self):
         self.timetable = make_2d_array()
     
-    def add_course(self, COURSE_DATA):
-        
+    def add_course(self, Course):
+        for day in Course.times:
+            index_0 = Course.times[day][0]
+            index_1 = Course.times[day][1] 
+            # self.timetable[day][index_0:index_1] = [Course] * (index_1 - index_0) 
+            for slot in range(index_0, index_1):
+                self.timetable[day][slot] = Course
 
 
+    def check_compatibility(self, Course):
+        for day in Course.times:
+            index_0 = Course.times[day][0]
+            index_1 = Course.times[day][1]
+            if self.timetable[day][index_0] != 0 or self.timetable[day][index_1] != 0:
+                return False
+            else:
+                return True
+
+#########################################
+
+mySchedule = Schedule()
+#mySchedule.add_course(test_class)
+#print_2d_arr(mySchedule.timetable)
+#print(mySchedule.check_compatibility(test_class2))
+#print(mySchedule.check_compatibility(test_class3))
+
+##########################################
 # %%
