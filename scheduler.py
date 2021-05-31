@@ -2,9 +2,14 @@
 import numpy as np
 import csv
 import string
+import random
+import openpyxl
+from itertools import combinations
 
 times_dict = {'08:15':0, '08:45':1,'09:15':2,'09:45':3, '10:15':4, '10:45':5,'11:15':6,'11:45':7, '12:15':8, '12:45':9,'13:15':10,'13:45':11, '14:15':12, '14:45':13,'15:15':14,'15:45':15, '16:15':16, '16:45':17,'17:15':18,'17:45':19, '18:15':20, '18:45':21,'19:15':22,'19:45':23, '20:15':24}
 day_dict = {'M': 0, 'T': 1, 'W': 2, 'H': 3, 'F': 4}
+
+duplicates_list = []
 
 def make_2d_array():
     # Each row represents a day, each time represents a timeslot
@@ -17,7 +22,7 @@ class Course(object):
     def __init__(self, title, course_no, section, times, room, teacher='N/A'):
         self.title = title
         self.course_no = course_no
-        self.section = section
+        self.section = str(section).zfill(5)
         self.times = times        
         self.teacher = teacher
         # 'times' dict will look like this: 
@@ -29,9 +34,37 @@ class Course(object):
         self.course_type = self.get_course_type()
     
     def get_course_type(self):
+        if self.course_no in eng_index:
+            return 'ENG'
+        elif self.course_no in hum_index:
+            return 'HUM'
+        elif self.course_no in com_index:
+            return 'COM'
+        elif self.course_no in lin_index:
+            return 'LIN'
+        elif self.course_no in bio_index:
+            return 'BIO'
+        elif self.course_no in wav_index:
+            return 'WAV'
+    
+    def check_duplicate(self, Course1, Course2):
+        check = False
+        for day in Course1.times:
+            try:
+                check = Course1.times[day] == Course2.times[day]
+            except:
+                pass
+        if check == True:
+            duplicates_list.append((Course1, Course2))
+        return check
+
     
     def __str__(self):
-        return "Title: " + str(self.title) + "\n" + "Course #: " + str(self.course_no) + "\n" + "Section: " + str(self.section) + "\n" + "Times: " + str(self.times) + "\n" + "Room: " + str(self.room) + "\n" + "Teacher: " + str(self.teacher) + "\n" + "Course type: " + self.course_type + "\n"
+        #return "Title: " + str(self.title) + "\n" + "Course #: " + str(self.course_no) + "\n" + "Section: " + str(self.section) + "\n" + "Times: " + str(self.times) + "\n" + "Room: " + str(self.room) + "\n" + "Teacher: " + str(self.teacher) + "\n" + "Course type: " + self.course_type + "\n"
+        return str(self.title + " " + self.section + " " + self.teacher)
+    
+    def __repr__(self):
+        return str(self.course_no + " " + self.section + " " + self.teacher)
 
 def csv_to_2d_arr(csv_name):
     with open(csv_name, 'r') as csv_file:
@@ -95,6 +128,7 @@ class Schedule(object):
     def __init__(self):
         self.timetable = make_2d_array()
         self.courses_taken = []
+        self.subjects_taken = []
     
     def add_course(self, Course):
         for day in Course.times:
@@ -104,20 +138,94 @@ class Schedule(object):
             for slot in range(index_0, index_1):
                 self.timetable[day][slot] = Course
         self.courses_taken.append(Course)
+        self.subjects_taken.append(Course.course_type)
 
 
     def check_compatibility(self, Course):
-        for day in Course.times:
-            index_0 = Course.times[day][0]
-            index_1 = Course.times[day][1]
-            if self.timetable[day][index_0] != 0 or self.timetable[day][index_1] != 0:
-                return False
-            else:
-                return True
+        if not Course.course_type in self.subjects_taken: 
+            for day in Course.times:
+                index_0 = Course.times[day][0]
+                index_1 = Course.times[day][1]
+                if self.timetable[day][index_0] != 0 or self.timetable[day][index_1] != 0:
+                    return False
+                else:
+                    return True
+        else:
+            return False
+    
+    def pick_random_schedule(self):
+        failed_msg = "No working schedule was found, please try again."
+        self.add_course(random.choice(eng_courses))
+        for Course in hum_courses:
+            if self.check_compatibility(Course):
+                self.add_course(Course)
+        if 'HUM' not in self.subjects_taken:
+            return failed_msg
+        for Course in com_courses:
+            if self.check_compatibility(Course):
+                self.add_course(Course)
+        if 'COM' not in self.subjects_taken:
+            return failed_msg
+        for Course in lin_courses:
+            if self.check_compatibility(Course):
+                self.add_course(Course)
+        if 'LIN' not in self.subjects_taken:
+            return failed_msg
+        for Course in bio_courses:
+            if self.check_compatibility(Course):
+                self.add_course(Course)
+        if 'BIO' not in self.subjects_taken:
+            return failed_msg
+        for Course in wav_courses:
+            if self.check_compatibility(Course):
+                self.add_course(Course)
+        if 'WAV' not in self.subjects_taken:
+            return failed_msg
+        #return self.timetable
+    
+    def delete_course(self, Course):
+        for i, day in enumerate(self.timetable):
+            for j, timeslot in enumerate(day):
+                if repr(Course) == timeslot:
+                    self.timetable[i][j] = 0
 
-#########################################
+    
+    def clear_timetable(self):
+        self.timetable = make_2d_array()
 
-mySchedule = Schedule()
+    def find_all_timetables(self):
+        timetables_list = []
+        timetable_count = 0
+        for bio_course in bio_courses:
+            self.add_course(bio_course)
+            for hum_course in hum_courses:
+                if self.check_compatibility(hum_course):
+                    self.add_course(hum_course)
+                for lin_course in lin_courses:
+                    if self.check_compatibility(lin_course):
+                        self.add_course(lin_course)
+                    for eng_course in eng_courses:
+                        if self.check_compatibility(eng_course):
+                            self.add_course(eng_course)
+                        for wav_course in wav_courses:
+                            if self.check_compatibility(wav_course):
+                                self.add_course(wav_course)
+                            for com_course in com_courses:
+                                if self.check_compatibility(com_course):
+                                    self.add_course(com_course)
+                                if len(self.subjects_taken) == 6:
+                                    timetables_list.append(self.timetable)
+                                    timetable_count +=1 
+                                    if timetable_count % 1000 == 0:
+                                        print("Schedule found POGGIES" + str(timetable_count))
+                                        print(self.timetable)
+                                self.delete_course(com_course)
+                            self.delete_course(wav_course)
+                        self.delete_course(eng_course)
+                    self.delete_course(lin_course)
+                self.delete_course(hum_course)
+            self.delete_course(bio_course)
+
 
 ##########################################
 
@@ -155,22 +263,87 @@ CONV_COURSES_LIST = [create_class_from_list(row) for row in FULL_COURSES_LIST]
 for Course in CONV_COURSES_LIST:
     if Course.course_no in eng_index:
         eng_courses.append(Course)
-    if Course.course_no in hum_index:
+    elif Course.course_no in hum_index:
         hum_courses.append(Course)
-    if Course.course_no in com_index:
+    elif Course.course_no in com_index:
         com_courses.append(Course)
-    if Course.course_no in lin_index:
+    elif Course.course_no in lin_index:
         lin_courses.append(Course)
     elif Course.course_no in bio_index:
         bio_courses.append(Course)
     elif Course.course_no in wav_index:
         wav_courses.append(Course)
 
-print_2d_arr(eng_courses)
-print_2d_arr(hum_courses)
-print_2d_arr(com_courses)
-print_2d_arr(lin_courses)
-print_2d_arr(bio_courses)
-print_2d_arr(wav_courses)
+mySchedule = Schedule()
+
+print("working")
+
+
+#############################
+
+wb = openpyxl.Workbook()
+filepath = "courses.xlsx"
+wb.save(filepath)
+
+sheet = wb.active
+
+def template(sheet):
+    for day in day_dict:
+        sheet.cell(row=1, column=day_dict[day]+2).value = day
+    for time in times_dict:
+        sheet.cell(row=times_dict[time]+2, column=1).value = time 
+
+template(sheet)
+
+subject_color_dict = {'ENG': '9803FC', 'HUM': 'FCAD03', 'COM': '03F8FC', 'LIN': 'FC0339', 'BIO': '03FC5E', 'WAV': 'FCF803'} 
+
+def timetable_to_xlsx(timetable, col_adjust=0):
+    for i, day in enumerate(timetable):
+        for j, timeslot in enumerate(day):
+            sheet.cell(row=j+2,column=i+col_adjust+2).value = str(timeslot)
+            if timeslot != 0:
+                sheet.cell(row=j+2,column=i+2).fill = openpyxl.styles.PatternFill(start_color=subject_color_dict[timeslot.course_type], fill_type="solid")
+
+def timetables_to_xlsx(timetable_list):
+    col_adjust = 0
+    for timetable in timetable_list:
+        timetable_to_xlsx(timetable, col_adjust)
+        col_adjust += 7
+
+def find_duplicates(my_list):
+    duplicate_count = 0
+    for comb in list(combinations(my_list, 2)):
+        if comb[0].check_duplicate(comb[0], comb[1]):
+            try:
+                my_list.remove(comb[1])
+            except:
+                pass
+            duplicate_count += 1
+    print("Found " + str(duplicate_count) + " duplicates")
+
+find_duplicates(eng_courses)
+find_duplicates(hum_courses)
+find_duplicates(com_courses)
+find_duplicates(lin_courses)
+find_duplicates(bio_courses)
+find_duplicates(wav_courses)
+print(len(eng_courses))
+print(len(hum_courses))
+print(len(com_courses))
+print(len(lin_courses))
+print(len(bio_courses))
+print(len(wav_courses))
+
+for course in wav_courses:
+    if 'Sankeralli' in course:
+        wav_courses.remove(course)
+
+
+
+timetables_to_xlsx(mySchedule.find_all_timetables())
+
+wb.save(filepath)
+
 
 # %%
+
