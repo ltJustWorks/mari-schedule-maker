@@ -61,7 +61,7 @@ class Course(object):
     
     def __str__(self):
         #return "Title: " + str(self.title) + "\n" + "Course #: " + str(self.course_no) + "\n" + "Section: " + str(self.section) + "\n" + "Times: " + str(self.times) + "\n" + "Room: " + str(self.room) + "\n" + "Teacher: " + str(self.teacher) + "\n" + "Course type: " + self.course_type + "\n"
-        return str(self.title + " " + self.section + " " + self.teacher)
+        return str(self.course_no + " " + self.section + " " + self.teacher)
     
     def __repr__(self):
         return str(self.course_no + " " + self.section + " " + self.teacher)
@@ -321,23 +321,46 @@ def find_duplicates(my_list):
             duplicate_count += 1
     print("Found " + str(duplicate_count) + " duplicates")
 
-find_duplicates(eng_courses)
-find_duplicates(hum_courses)
-find_duplicates(com_courses)
-find_duplicates(lin_courses)
-find_duplicates(bio_courses)
-find_duplicates(wav_courses)
-print(len(eng_courses))
-print(len(hum_courses))
-print(len(com_courses))
-print(len(lin_courses))
-print(len(bio_courses))
-print(len(wav_courses))
 
-for course in wav_courses:
-    if 'Sankeralli' in course:
-        wav_courses.remove(course)
+master_list = (eng_courses, hum_courses, com_courses, lin_courses, bio_courses, wav_courses)
 
+def debug_courses():
+    for course_list in master_list:
+        print(len(course_list))
+
+debug_courses()
+for course_list in master_list:
+    find_duplicates(course_list)
+debug_courses()
+
+def remove_course_by_keyword(keyword):
+    for course_list in master_list:
+        for course in course_list:
+            if keyword in str(course):
+                course_list.remove(course)
+
+def keep_course_by_keyword(keyword):
+    for course_list in master_list:
+        for course in course_list:
+            if keyword not in str(course):
+                course_list.remove(course)
+
+#def max_course_time(time):
+#    for course_list in master_list:
+#        for Course in course_list:
+#            #for day in course.times:
+#            if times_dict[time] in sum(Course.times.values()):
+#                course_list.remove(Course)
+
+user_input = ''
+while user_input != 'done':
+    input2 = input('Do you want to keep a teacher or remove a teacher? (type k/r): ')
+    if input2 == 'r':
+        remove_course_by_keyword(input('Please specify a teacher you do not want: '))
+    elif input2 == 'k':
+        keep_course_by_keyword(input("Please specify a favorite teacher you want to keep: "))
+    debug_courses()
+    user_input = input('Is that all? (type "done" if yes)')
 
 
 timetables_to_xlsx(mySchedule.find_all_timetables())
