@@ -1,6 +1,8 @@
 # mari-schedule-maker
 
-How to use
+**NOTE: NOT WORKING**
+
+## How to use
 * Install python 3 (make sure 'add python to environment variables' is ticked).
 * Open command prompt, type in `pip3 install numpy` and `pip3 install openpyxl` for the required packages.
 * Download the repo as a ZIP file, extract the folder.
