@@ -1,4 +1,5 @@
 # mari-schedule-maker
+Note: Not working as intended, feel free to fork
 
 ## How to use
 * Install python 3 (make sure 'add python to environment variables' is ticked).
